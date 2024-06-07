@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <div class="wrapper">
+        <div id="header">
+          <p class="id-client"></p>
+          <input
+            type="text"
+            id="suggest"
+            class="input"
+            placeholder="Введите адрес"
+          />
+          <button @click="getAddress" type="submit" id="button">Проверить</button>          
+        </div>
+        <p id="notice">Адрес не найден</p>
+        <div id="map"></div>
+        <div id="footer">
+          <div id="messageHeader"></div>
+          <div class="address" id="message"></div>
+        </div>
+        <button class="backPage">
+          Сохранить
+        </button>
+      </div>      
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>                
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=a0d1d28d-ad42-4990-9347-2e920e1da15c&suggest_apikey=50b4fbfa-d350-4f1a-8dc2-2992091a8aff" type="text/javascript"></script>
+    <script src="https://yandex.st/jquery/2.2.3/jquery.min.js" type="text/javascript"></script>            
+    <script  src="./index.js"></script>    
+    <script type="module">
+      let tg = window.Telegram.WebApp;
+      tg.expand();
+
+      function fetchUserId() {
+      const tgClient = document.querySelector(".id-client");
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+          const id = tg.initDataUnsafe.user.id;        
+          tgClient.innerHTML = id;
+        }
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        fetchUserId();        
+      });
+
+    </script>
+    <script>
+      const btn = document.querySelector('.backPage');
+      btn.addEventListener('click', function() {
+        window.history.back ();
+      })
+    </script>
+</body>
+</html>

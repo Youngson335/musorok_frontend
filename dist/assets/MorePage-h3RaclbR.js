@@ -1,0 +1,1 @@
+import{_ as o,N as s,c as t,o as a,p as c,g as d,a as n}from"./index-D5IhssbA.js";const p={components:{NavigationMenu:s}},_=e=>(c("data-v-2d7dfe81"),e=e(),d(),e),r=_(()=>n("h1",null,'Страница "еще" в разработке!',-1)),i=[r];function f(e,l,u,h,m,v){return a(),t("div",null,i)}const $=o(p,[["render",f],["__scopeId","data-v-2d7dfe81"]]);export{$ as default};
