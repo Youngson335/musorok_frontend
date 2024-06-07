@@ -48,9 +48,12 @@
           v-if="question.element_type === 'photo_upload'"
         >
           <el-upload
+            v-loading="loading"
             :file-list="fileListMap[client.id[0]]"
             :key="client.id"
-            :http-request="(file) => uploadFile(file, client.id)"
+            :http-request="
+              (file) => uploadFile(file, client.id, question.ordinal)
+            "
             class="upload-demo"
             :on-preview="handlePreview"
             :on-remove="handleRemove"
@@ -110,6 +113,7 @@ export default {
       saveID: null,
       selectedValues: {},
       fileListMap: {},
+      loading: false,
     };
   },
   props: {
@@ -132,14 +136,14 @@ export default {
   },
   methods: {
     ...mapGetters(["getUserId"]),
-    async uploadFile(options, clientId) {
+
+    async uploadFile(options, clientId, ordinal) {
       const { file } = options;
       const form = new FormData();
-      form.append(
-        "files",
-        file,
-        `meetings_file/${clientId}_${this.getUserId}_${file}.jpg`
-      );
+      console.log(this.getUserId());
+      const filePath = `meetings_file/${clientId}_${this.getUserId()}_${ordinal}.jpg`;
+      form.append("files", file, filePath);
+      this.loading = true;
       const AUTH_TOKEN = import.meta.env.VITE_APP_AUTH_TOKEN;
       try {
         const response = await fetch(
@@ -156,6 +160,7 @@ export default {
         if (response.ok) {
           console.log(response);
           ElMessage.success("Файл успешно загружен!");
+          this.loading = false;
           // Обновление списка файлов для текущего клиента
           if (!this.fileListMap[clientId]) {
             this.fileListMap[clientId] = [];
@@ -167,7 +172,8 @@ export default {
         }
       } catch (error) {
         console.error("File upload error:", error);
-        ElMessage.error("Ошибка синтаксиса");
+        ElMessage.error("Произошла ошибка");
+        this.loading = false;
       }
     },
     handleRemove(uploadFile, uploadFiles) {
