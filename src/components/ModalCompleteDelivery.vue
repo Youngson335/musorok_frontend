@@ -25,6 +25,12 @@
         <p>{{ client.comment }}</p>
       </div>
       <div class="detail__info">
+        <div class="time__info">
+          <p>
+            Интервал:
+            <span>{{ `${client.delivery_dt} ${client.interval}` }}</span>
+          </p>
+        </div>
         <div class="info__task">
           <p>
             Задание: <span>{{ client.meeting_name }}</span>
@@ -61,7 +67,13 @@
             multiple
             accept="image/*"
           >
-            <el-button type="primary">Загрузить фото</el-button>
+            <el-button type="primary"
+              ><input
+                class="custom_fileInput"
+                type="file"
+                accept="image/*"
+                capture="camera"
+            /></el-button>
           </el-upload>
         </div>
         <div class="info__problem" v-if="question.element_type === 'dropdown'">
@@ -69,7 +81,6 @@
             v-model="selectedValues[question.ordinal]"
             placeholder="Выберите вариант"
             size="large"
-            style="width: 240px"
           >
             <el-option
               v-for="item in question.options"
@@ -92,6 +103,7 @@
       @updateStateModalConfirm="updateStateModalConfirm"
       :saveID="saveID"
       @hiddenModal="hiddenModal"
+      :questions="questions"
     />
   </div>
 </template>
@@ -114,6 +126,7 @@ export default {
       selectedValues: {},
       fileListMap: {},
       loading: false,
+      questions: null,
     };
   },
   props: {
@@ -140,14 +153,18 @@ export default {
     async uploadFile(options, clientId, ordinal) {
       const { file } = options;
       const form = new FormData();
-      console.log(this.getUserId());
-      const filePath = `meetings_file/${clientId}_${this.getUserId()}_${ordinal}.jpg`;
+      const filePath = `${clientId}_${this.getUserId()}_${ordinal}.jpg`;
+      const directoryPath = "meetings_file";
+
       form.append("files", file, filePath);
+
       this.loading = true;
       const AUTH_TOKEN = import.meta.env.VITE_APP_AUTH_TOKEN;
       try {
         const response = await fetch(
-          "https://api.timeweb.cloud/api/v1/storages/buckets/306097/object-manager/upload",
+          `https://api.timeweb.cloud/api/v1/storages/buckets/306097/object-manager/upload?path=${encodeURIComponent(
+            directoryPath
+          )}`,
           {
             method: "POST",
             headers: {
@@ -161,6 +178,7 @@ export default {
           console.log(response);
           ElMessage.success("Файл успешно загружен!");
           this.loading = false;
+
           // Обновление списка файлов для текущего клиента
           if (!this.fileListMap[clientId]) {
             this.fileListMap[clientId] = [];
@@ -169,6 +187,7 @@ export default {
           console.log(this.fileListMap);
         } else {
           ElMessage.error("Ошибка загрузки файла.");
+          this.loading = false;
         }
       } catch (error) {
         console.error("File upload error:", error);
@@ -203,6 +222,39 @@ export default {
     },
 
     completeDelivery(id) {
+      let info = this.checkInfoUser;
+      let selectVar = this.selectedValues;
+      let result;
+
+      function getProxyObj(info) {
+        for (let prop in info) {
+          result = info[prop];
+        }
+        return result;
+      }
+
+      result = getProxyObj(info);
+      let query = result.scenario_elements;
+      let keysAsNumbers = Object.keys(selectVar).map((key) => parseInt(key));
+      let saveQuestions = [];
+
+      keysAsNumbers.forEach((key) => {
+        let allResult = query.find((item) => item.ordinal === key);
+        let answer = selectVar[key];
+        let questionObj = {
+          question: allResult.element_name,
+          answer: answer,
+        };
+        saveQuestions.push(questionObj);
+      });
+
+      let questions = {
+        meeting_id: this.saveID,
+        questions: saveQuestions,
+      };
+
+      this.questions = JSON.stringify(questions);
+
       this.showConfirmDelivery = true;
     },
   },
@@ -305,5 +357,38 @@ export default {
 }
 .el-upload-list--picture .el-upload-list__item {
   padding: 5px !important;
+}
+.custom_fileInput {
+  color: transparent;
+}
+.custom_fileInput::-webkit-file-upload-button {
+  visibility: hidden;
+}
+.custom_fileInput::before {
+  content: "Выберите файл";
+  color: rgb(248, 248, 248);
+  text-align: center;
+  display: inline-block;
+  border-radius: 3px;
+  padding: 5px 8px;
+  outline: none;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 10pt;
+}
+
+.custom_fileInput:active {
+  outline: 0;
+}
+.el-upload-list {
+  max-width: 330px !important;
+}
+.time__info {
+  width: 100%;
+}
+.time__info span {
+  font-weight: 400;
 }
 </style>

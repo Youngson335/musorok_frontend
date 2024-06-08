@@ -11,7 +11,7 @@
           <button>Отменить</button>
         </div>
         <div class="btns__save">
-          <button :plain="true" @click="completeDelivery(getId)">
+          <button :plain="true" @click="postDataQuestionnaire(getId)">
             Завершить
           </button>
         </div>
@@ -22,6 +22,7 @@
 
 <script>
 import { ElMessage } from "element-plus";
+
 export default {
   props: {
     showConfirmDelivery: {
@@ -30,8 +31,14 @@ export default {
     saveID: {
       type: Number,
     },
+    questions: {
+      type: Array,
+    },
   },
   computed: {
+    getQuestions() {
+      return this.questions;
+    },
     showModal() {
       return this.showConfirmDelivery;
     },
@@ -52,10 +59,32 @@ export default {
     hiddenAllModal() {
       this.$emit("resetModal", false);
     },
-    async completeDelivery(id) {
+    async postDataQuestionnaire(id) {
       let clientId = String(id);
       console.log(id);
 
+      await fetch(`https://musorok.online:8000/save_meeting_questions`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: this.getQuestions,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Ошибка при отправке данных");
+          } else return response;
+        })
+        .then((data) => {
+          console.log("Загрузил данные!: ", data);
+          this.completeDelivery(clientId);
+        })
+        .catch((error) => {
+          console.error("Произошла ошибка: ", error);
+        });
+    },
+    async completeDelivery(id) {
       await fetch(`https://musorok.online:8000/update_delivery_done/`, {
         method: "POST",
         headers: {
@@ -63,7 +92,7 @@ export default {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id: clientId,
+          id: id,
         }),
       })
         .then((response) => {
@@ -73,7 +102,6 @@ export default {
         })
         .then((data) => {
           console.log("Обновил статус: ", data);
-
           this.open2();
         })
         .catch((error) => {
