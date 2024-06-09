@@ -7,7 +7,7 @@ const store = createStore({
       count: 0,
       userName: "",
       userLastName: "",
-      userId: 7173408228,
+      userId: null,
       user: null,
       ivanID: 7173408228,
       myId: 1491570929,
