@@ -184,7 +184,7 @@ export default {
   margin: 3px;
   background: #fcfcfc;
   animation: 1s showNav ease;
-  z-index: 20;
+  z-index: 2000;
 }
 .menu__link {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
