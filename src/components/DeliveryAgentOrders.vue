@@ -5,7 +5,14 @@
       v-show="showInfoDelivery"
       v-for="day of reDelivery"
     >
-      <div class="block__order" @click="getValueFromProxy(day.id)">
+      <div
+        class="block__order"
+        :class="{
+          done: day.meeting_status === 'Done',
+          canceling: day.meeting_status === 'Canceling',
+        }"
+        @click="getValueFromProxy(day.id)"
+      >
         <div class="order__interval">
           <div class="interval__start">{{ day.start_time }}</div>
           <div class="interval__end">{{ day.end_time }}</div>
@@ -171,7 +178,11 @@ export default {
         let infoWaiting = data.filter(
           (item) => item.meeting_status === "Waiting"
         );
-        let infoDone = data.filter((item) => item.meeting_status === "Done");
+        let infoDone = data.filter(
+          (item) =>
+            item.meeting_status === "Done" ||
+            item.meeting_status === "Canceling"
+        );
 
         this.deliveryInProgress = infoInProgress;
         this.$emit("deliveryWaiting", infoWaiting);
@@ -255,5 +266,13 @@ export default {
   text-align: center;
   color: red;
   font-size: 18px;
+}
+.done {
+  background-color: #77cd6d;
+  border: 1px solid #62ab5a;
+}
+.canceling {
+  background-color: #ff6969;
+  border: 1px solid #c85151;
 }
 </style>

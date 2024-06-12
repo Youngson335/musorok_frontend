@@ -1,7 +1,7 @@
 <template>
   <StopModal />
   <div class="content">
-    <UserPhoto class="user__photo" />
+    <UserPhoto :linkToPhoto="linkToPhoto" class="user__photo" />
     <div class="user__info">
       <UserName :userName="userName" :userLastName="userLastName" />
       <div class="info__id">
@@ -37,6 +37,7 @@ export default {
     return {
       userId: null,
       freeDelivery: null,
+      linkToPhoto: null,
     };
   },
   methods: {
@@ -47,6 +48,7 @@ export default {
       let data = await response.json();
       console.log(data);
       this.freeDelivery = data.free_delivery;
+      this.linkToPhoto = data.photo_url;
     },
   },
   computed: {

@@ -21,6 +21,12 @@
         <p>{{ client.comment }}</p>
       </div>
       <div class="detail__info">
+        <div class="time__info">
+          <p>
+            Интервал:
+            <span>{{ `${client.delivery_dt} ${client.interval}` }}</span>
+          </p>
+        </div>
         <div class="info__task">
           <p>
             Задание: <span>{{ client.meeting_name }}</span>
@@ -132,7 +138,7 @@ export default {
   flex-direction: column;
   padding: 20px;
   width: 100%;
-  z-index: 30;
+  z-index: 3000;
 }
 .all__info {
   height: 80%;

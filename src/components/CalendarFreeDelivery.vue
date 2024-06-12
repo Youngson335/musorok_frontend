@@ -29,29 +29,49 @@
       <div class="modal">
         <div class="calendar__modal">
           <div class="modal__variants">
-            <el-button class="variant" plain @click="open1"
-              >"09:00-12:00"
+            <el-button
+              class="variant"
+              plain
+              @click="selectInterval('09:00-12:00')"
+            >
+              "09:00-12:00"
             </el-button>
           </div>
           <div class="modal__variants">
-            <el-button class="variant" plain @click="open1"
-              >"12:00-15:00"</el-button
+            <el-button
+              class="variant"
+              plain
+              @click="selectInterval('12:00-15:00')"
             >
+              "12:00-15:00"
+            </el-button>
           </div>
           <div class="modal__variants">
-            <el-button class="variant" plain @click="open1"
-              >"15:00-18:00"</el-button
+            <el-button
+              class="variant"
+              plain
+              @click="selectInterval('15:00-18:00')"
             >
+              "15:00-18:00"
+            </el-button>
           </div>
           <div class="modal__variants">
-            <el-button class="variant" plain @click="open1"
-              >"18:00-21:00"</el-button
+            <el-button
+              class="variant"
+              plain
+              @click="selectInterval('18:00-21:00')"
             >
+              "18:00-21:00"
+            </el-button>
           </div>
           <div class="modal__variants">
-            <el-button class="variant" plain @click="open1"
-              >"09:00-21:00"</el-button
+            <el-button
+              class="variant"
+              plain
+              @click="selectInterval('09:00-21:00')"
             >
+              "09:00-21:00"
+            </el-button>
           </div>
         </div>
       </div>
@@ -59,8 +79,8 @@
         <div class="btn__cancel" :plain="true" @click="open3">
           <button>Отменить</button>
         </div>
-        <div class="btn__save" :plain="false" @click="open2">
-          <button @click="postStateHiddenBtn">Сохранить</button>
+        <div class="btn__save" :plain="false" @click="postDataFreeDelivery">
+          <button>Сохранить</button>
         </div>
       </div>
     </div>
@@ -68,255 +88,289 @@
 </template>
 
 <script lang="js">
-    import { ElNotification } from "element-plus";
-    import { ElMessage } from 'element-plus';
-    import { mapGetters } from "vuex";
+import { ElNotification } from "element-plus";
+import { ElMessage } from "element-plus";
+import { mapGetters } from "vuex";
 
-    export default {
-      data() {
-        return {
-          infoData: null,
-          userID: null,
-          selectedDate: null,
-          stateHiddenBtn: this.hiddenBtn,
-        };
-      },
-      props: {
-        hiddenBtn: {
-          type: Boolean,
+export default {
+  data() {
+    return {
+      infoData: null,
+      userID: null,
+      selectedDate: null,
+      selectedInterval: null,
+      stateHiddenBtn: this.hiddenBtn,
+    };
+  },
+  props: {
+    hiddenBtn: {
+      type: Boolean,
+    },
+  },
+  computed: {
+    ...mapGetters(["getUserId"]),
+  },
+  methods: {
+    postStateHiddenBtn() {
+      this.$emit("updateShowBtn", false);
+    },
+    open1() {
+      let int = this.selectedInterval
+      let date = this.selectedDate;
+      ElNotification({
+        title: `Ваше время ${int} и дата: ${date}`,
+        type: "success",
+      });
+    },
+    open2() {
+      let int = this.selectedInterval
+      let date = this.selectedDate;
+      ElNotification({
+        title: `Вынос назначен на ${date} в ${int}`,
+        message: 'Не забудьте пожалуйста выставить мусор за дверь к началу вашего временного интервала',
+        type: "success",
+        duration: 10000
+      });
+    },
+    open3() {
+      ElMessage({
+        message: "Вынос отменен!",
+        type: "info",
+        plain: true,
+      });
+    },
+    selectInterval(interval) {
+      this.selectedInterval = interval;
+      this.open1();
+    },
+    async postDataFreeDelivery() {
+      const userId = this.getUserId;
+      const data = {
+        date: this.selectedDate,
+        interval: this.selectedInterval,
+      };
+      console.log("Sending data:", data);
+      try {
+        const response = await fetch(
+          `https://musorok.online:8000/add_delivery/${userId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              accept: "application/json",
+            },
+            body: JSON.stringify(data),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Ошибка при выполнении запроса");
         }
-      },
-      computed: {
-        ...mapGetters(['getUserId']),
-      },
-      methods: {
-        postStateHiddenBtn() {
-          this.$emit('updateShowBtn', false);
-        },
-        open1(){
-        ElNotification({
-          title: "Интервал выбран",
-          message: 'Нажмите "сохранить"',
-          type: "success",
-          });
-        },
-        open2(){
-          ElMessage({
-            message: 'Ожидайте вынос!',
-            type: 'success',
-          })
-        },
-        open3() {
-          ElMessage({
-            message: 'Вынос отменен!',
-            type: 'info',
-            plain: true,
-          })
+        const result = await response.json();
+        console.log("Response data:", result);
+        this.open2();
+        const calendar = document.querySelector(".position__calendar");
+        calendar.style.display = "none";
+      } catch (error) {
+        console.error("Ошибка при обновлении значений переключения:", error);
+      }
+    },
+    selectDate(date) {
+      this.selectedDate = date;
+      console.log("Selected Date:", this.selectedDate);
+    }
+  },
+  created() {
+    this.userID = this.getUserId;
+  },
+  mounted() {
+    const header = document.querySelector(".calendar h3");
+    const dates = document.querySelector(".dates");
+    const navs = document.querySelectorAll("#prev, #next");
+    const infoDate = document.querySelector(".info__date");
+
+    const userId = this.getUserId;
+
+    const months = [
+      "Январь",
+      "Февраль",
+      "Март",
+      "Апрель",
+      "Май",
+      "Июнь",
+      "Июль",
+      "Август",
+      "Сентябрь",
+      "Октябрь",
+      "Ноябрь",
+      "Декабрь",
+    ];
+
+    let date = new Date();
+    let month = date.getMonth();
+    let year = date.getFullYear();
+
+    const renderCalendar = () => {
+      let start = new Date(year, month, 1).getDay() || 7;
+      let endDate = new Date(year, month + 1, 0).getDate();
+      let end = new Date(year, month, endDate).getDay();
+      let endDatePrev = new Date(year, month, 0).getDate();
+
+      let datesHtml = "";
+
+      // Add previous month's last days
+      for (let i = start - 1; i > 0; i--) {
+        datesHtml += `<li class="inactive">${endDatePrev - i + 1}</li>`;
+      }
+
+      // Add current month's days
+      for (let i = 1; i <= endDate; i++) {
+        let className = "";
+        if (
+          i === new Date().getDate() &&
+          month === new Date().getMonth() &&
+          year === new Date().getFullYear()
+        ) {
+          className += " today activeDay";
         }
-      },
-      created() {
-        this.userID = this.getUserId;
-      },
-      mounted() {
-        const header = document.querySelector(".calendar h3");
-        const dates = document.querySelector(".dates");
-        const navs = document.querySelectorAll("#prev, #next");
-        const infoDate = document.querySelector('.info__date');
 
-        const userId = this.getUserId;
+        let classString = className !== "" ? ` class="${className}"` : "";
+        datesHtml += `<li${classString}>${i}</li>`;
+      }
 
-        const months = [
-          "Январь",
-          "Февраль",
-          "Март",
-          "Апрель",
-          "Май",
-          "Июнь",
-          "Июль",
-          "Август",
-          "Сентябрь",
-          "Октябрь",
-          "Ноябрь",
-          "Декабрь",
-        ];
+      // Add next month's first days
+      for (let i = end + 1; i < 7; i++) {
+        datesHtml += `<li class="inactive">${i - end}</li>`;
+      }
 
-        let date = new Date();
-        let month = date.getMonth();
-        let year = date.getFullYear();
+      dates.innerHTML = datesHtml;
+      header.textContent = `${months[month]} ${year}`;
 
-        function renderCalendar() {
-          let start = new Date(year, month, 1).getDay() || 7;
-          let endDate = new Date(year, month + 1, 0).getDate();
-          let end = new Date(year, month, endDate).getDay();
-          let endDatePrev = new Date(year, month, 0).getDate();
+      // Add noActive class to past dates and today's date
+      let today = new Date();
+      let currentFullYear = today.getFullYear();
+      let currentMonth = today.getMonth() + 1;
+      let currentDate = today.getDate();
 
-          let datesHtml = "";
+      let allNumberCalendar = [...dates.children];
 
-          // Add previous month's last days
-          for (let i = start - 1; i > 0; i--) {
-            datesHtml += `<li class="inactive">${endDatePrev - i + 1}</li>`;
+      for (const date of allNumberCalendar) {
+        let dateNumber = parseInt(date.textContent, 10);
+
+        // Ensure only dates in the current month are considered
+        if (month + 1 === currentMonth && year === currentFullYear) {
+          if (dateNumber <= currentDate) {
+            date.classList.add("noActive");
           }
+        } else if (year < currentFullYear || (year === currentFullYear && month + 1 < currentMonth)) {
+          date.classList.add("noActive");
+        }
+      }
 
-          // Add current month's days
-          for (let i = 1; i <= endDate; i++) {
-            let className = "";
-            if (
-              i === new Date().getDate() &&
-              month === new Date().getMonth() &&
-              year === new Date().getFullYear()
-            ) {
-              className += " today activeDay";
-            }
+      function removeStyle() {
+        const variants = document.querySelectorAll(".modal__variants");
+        for (let elem of variants) {
+          let span = elem.firstElementChild;
+          elem.firstChild.style.setProperty(
+            "background-color",
+            "#c8c6c6",
+            "important"
+          );
+          span.lastElementChild.style.setProperty(
+            "color",
+            "#3b3737",
+            "important"
+          );
+        }
+      }
 
-            let classString = className !== "" ? ` class="${className}"` : "";
-            datesHtml += `<li${classString}>${i}</li>`;
-          }
+      const allBtns = document.querySelector(".modal__btn");
+      const cancelButton = allBtns.firstElementChild;
+      cancelButton.addEventListener("click", () => {
+        const modalCalendar = document.querySelector(".calendar");
+        modalCalendar.classList.add("hide__calendar");
+        setTimeout(() => {
+          modalCalendar.style.display = "none";
+        }, 300);
+      });
 
-          // Add next month's first days
-          for (let i = end + 1; i < 7; i++) {
-            datesHtml += `<li class="inactive">${i - end}</li>`;
-          }
+      dates.addEventListener(
+        "click",
+        (event) => {
+          removeStyle();
+          if (
+            event.target.tagName === "LI" &&
+            !event.target.classList.contains("inactive")
+          ) {
+            const modal = document.querySelector(".modal");
+            const modalVariants = document.querySelectorAll(".modal__variants");
 
-          dates.innerHTML = datesHtml;
-          header.textContent = `${months[month]} ${year}`;
+            let clickedDate = parseInt(event.target.textContent, 10);
+            let clickedMonth = month + 1;
+            let clickedYear = year;
 
-          // Add noActive class to past dates and today's date
-          let today = new Date();
-          let currentFullYear = today.getFullYear();
-          let currentMonth = today.getMonth() + 1;
-          let currentDate = today.getDate();
+            let activeDays = document.querySelectorAll(".activeDay");
+            activeDays.forEach((day) => {
+              day.classList.remove("activeDay");
+            });
+            modal.style.display = "flex";
 
-          let allNumberCalendar = [...dates.children];
+            let interval;
+            for (let elem of modalVariants) {
+              let span = elem.firstElementChild;
 
-          for (const date of allNumberCalendar) {
-            let dateNumber = parseInt(date.textContent, 10);
+              elem.addEventListener("click", () => {
+                const saveButton = allBtns.lastElementChild;
 
-            // Ensure only dates in the current month are considered
-            if (month + 1 === currentMonth && year === currentFullYear) {
-              if (dateNumber <= currentDate) {
-                date.classList.add('noActive');
-              }
-            } else if (year < currentFullYear || (year === currentFullYear && month + 1 < currentMonth)) {
-              date.classList.add('noActive');
-            }
-          }
+                removeStyle();
 
-          function removeStyle() {
-            const variants = document.querySelectorAll(".modal__variants");
-            for(let elem of variants) {
-                let span = elem.firstElementChild;
-                elem.firstChild.style.setProperty("background-color", "#c8c6c6", "important")
-                span.lastElementChild.style.setProperty("color", "#3b3737", "important")
-              }
-          }
+                elem.firstChild.style.setProperty(
+                  "background-color",
+                  "#66a0d4",
+                  "important"
+                );
+                span.lastElementChild.style.setProperty(
+                  "color",
+                  "white",
+                  "important"
+                );
 
-          const allBtns = document.querySelector('.modal__btn');
-          const cancelButton = allBtns.firstElementChild;
-          cancelButton.addEventListener('click', ()=> {
-            const modalCalendar = document.querySelector('.calendar');
-            modalCalendar.classList.add('hide__calendar')
-            setTimeout(()=> {
-              modalCalendar.style.display = 'none'
-            }, 300)
-          })
+                interval = elem.textContent.trim();
+                console.log("Ваш интревал", interval);
 
-
-          dates.addEventListener("click", function (event) {
-            removeStyle();
-            if (event.target.tagName === "LI" && !event.target.classList.contains('inactive')) {
-              const modal = document.querySelector(".modal");
-              const modalVariants = document.querySelectorAll(".modal__variants");
-
-              let clickedDate = parseInt(event.target.textContent, 10);
-              let clickedMonth = month + 1;
-              let clickedYear = year;
-
-              let activeDays = document.querySelectorAll(".activeDay");
-              activeDays.forEach((day) => {
-                day.classList.remove("activeDay");
+                saveButton.style.display = "block";
+                saveButton.addEventListener("click", () => {
+                  this.selectedInterval = interval;
+                  this.postDataFreeDelivery();
+                });
               });
-              modal.style.display = 'flex'
-
-              let interval;
-              for(let elem of modalVariants) {
-                let span = elem.firstElementChild;
-
-                elem.addEventListener('click', function() {
-
-                  const saveButton = allBtns.lastElementChild;
-
-                  removeStyle();
-
-                  elem.firstChild.style.setProperty("background-color", "#66a0d4", "important")
-                  span.lastElementChild.style.setProperty("color", "white", "important")
-
-                  interval = elem.textContent.trim();
-                  console.log('Ваш интревал',interval);
-
-                  saveButton.style.display = 'block'
-                  saveButton.addEventListener('click', ()=> {
-                    postDataFreeDelivery()
-                  })
-                })
-              }
-
-              let selectedDate;
-              if (
-                clickedYear > currentFullYear ||
-                (clickedYear === currentFullYear && clickedMonth > currentMonth) ||
-                (clickedYear === currentFullYear && clickedMonth === currentMonth && clickedDate > currentDate)
-              ) {
-                event.target.classList.add("activeDay");
-
-                const monthName = months[month];
-                let reMonth = monthName.slice(0, -1) + 'я';
-
-                infoDate.innerHTML = `<p>Ваша дата: ${clickedDate} ${reMonth}</p>`;
-
-                let formattedDate = `${clickedYear}-${String(clickedMonth).padStart(2, '0')}-${String(clickedDate).padStart(2, '0')}`;
-                selectedDate = formattedDate;
-                console.log('Selected Date:', selectedDate);
-              }
-
-              async function postDataFreeDelivery() {
-                const probnay = {
-                  date: selectedDate,
-                  interval: JSON.parse(interval)
-                }
-                console.log(probnay);
-                await fetch(
-                  `https://musorok.online:8000/add_delivery/${userId}`,
-                  {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      accept: "application/json",
-                    },
-                    body: JSON.stringify({
-                      date: selectedDate,
-                      interval: JSON.parse(interval),
-                    }),
-                  }
-                  )
-                  .then((response) => {
-                    if (!response.ok) {
-                      throw new Error("Ошибка при выполнении запроса");
-                    }
-                    return response.json();
-                  })
-                  .then((data) => {
-                    const calendar = document.querySelector('.position__calendar');
-                    console.log("Обновил:", data);
-                    calendar.style.display = 'none'
-                  })
-                  .catch((error) => {
-                    console.error("Ошибка при обновлении значений переключения:", error);
-                  });
-              }
-
             }
-          }.bind(this));
-        }
+
+            if (
+              clickedYear > currentFullYear ||
+              (clickedYear === currentFullYear &&
+                clickedMonth > currentMonth) ||
+              (clickedYear === currentFullYear &&
+                clickedMonth === currentMonth &&
+                clickedDate > currentDate)
+            ) {
+              event.target.classList.add("activeDay");
+
+              const monthName = months[month];
+              let reMonth = monthName.slice(0, -1) + "я";
+
+              infoDate.innerHTML = `<p>Ваша дата: ${clickedDate} ${reMonth}</p>`;
+
+              let formattedDate = `${clickedYear}-${String(clickedMonth).padStart(
+                2,
+                "0"
+              )}-${String(clickedDate).padStart(2, "0")}`;
+              this.selectDate(formattedDate);
+            }
+          }
+        },
+        { once: true }
+      );
+    };
 
     navs.forEach((nav) => {
       nav.addEventListener("click", (e) => {
