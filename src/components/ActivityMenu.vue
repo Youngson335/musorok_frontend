@@ -27,7 +27,7 @@ export default {
         },
         {
           id: 2,
-          title: "Выполнено",
+          title: "Завершенные",
           progress: "Done",
           delivery: { counter: 0 },
         },
@@ -108,7 +108,7 @@ export default {
   margin-bottom: 20px;
 }
 .options button {
-  padding: 5px 10px;
+  padding: 5px;
   font-family: "Montserrat", sans-serif;
   background: none;
   border: 1px solid #cbcbcb;

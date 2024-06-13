@@ -47,7 +47,11 @@
           </p>
         </div>
       </div>
-      <div class="dynamics__info" v-for="question in client.scenario_elements">
+      <div
+        class="dynamics__info"
+        v-for="question in client.scenario_elements"
+        :key="question.ordinal"
+      >
         <p>{{ question.element_name }}</p>
         <div
           class="upload__photo"
@@ -56,7 +60,7 @@
           <el-upload
             v-loading="loading"
             :file-list="fileListMap[client.id[0]]"
-            :key="client.id"
+            :key="question.ordinal"
             :http-request="
               (file) => uploadFile(file, client.id, question.ordinal)
             "
@@ -81,21 +85,25 @@
             v-model="selectedValues[question.ordinal]"
             placeholder="Выберите вариант"
             size="large"
+            :class="{
+              'highlight-border': highlightedFields.includes(question.ordinal),
+            }"
+            @change="removeHighlight(question.ordinal)"
           >
             <el-option
               v-for="item in question.options"
-              :key="question.ordinal"
+              :key="item"
               :label="item"
               :value="item"
             />
           </el-select>
         </div>
       </div>
+
       <div class="complete">
-        <button @click="completeDelivery(checkId)">Завершить</button>
+        <button @click="completeDelivery(client.id)">Завершить</button>
       </div>
     </div>
-
     <ConfirmCompletionDelivery
       class="modal__confirm"
       :showConfirmDelivery="showConfirmDelivery"
@@ -127,6 +135,7 @@ export default {
       fileListMap: {},
       loading: false,
       questions: null,
+      highlightedFields: [],
     };
   },
   props: {
@@ -220,7 +229,6 @@ export default {
       this.$emit("editStateModal", false);
       this.$emit("updateData", true);
     },
-
     completeDelivery(id) {
       let info = this.checkInfoUser;
       let selectVar = this.selectedValues;
@@ -234,6 +242,7 @@ export default {
       }
 
       result = getProxyObj(info);
+      const formComplete = this.isFormComplete(result);
       let query = result.scenario_elements;
       let keysAsNumbers = Object.keys(selectVar).map((key) => parseInt(key));
       let saveQuestions = [];
@@ -254,8 +263,59 @@ export default {
       };
 
       this.questions = JSON.stringify(questions);
+      console.log(this.questions);
 
-      this.showConfirmDelivery = true;
+      // Highlight unfilled fields
+      this.highlightedFields = [];
+      query.forEach((element) => {
+        if (
+          element.element_type === "dropdown" &&
+          !this.selectedValues[element.ordinal]
+        ) {
+          this.highlightedFields.push(element.ordinal);
+        }
+      });
+
+      // Check photo uploads and highlight missing ones
+      query.forEach((element) => {
+        if (
+          element.element_type === "photo_upload" &&
+          (!this.fileListMap[result.id] ||
+            this.fileListMap[result.id].length === 0)
+        ) {
+          this.highlightedFields.push(element.ordinal);
+        }
+      });
+
+      // Only show confirmation modal if all validations pass
+      if (formComplete && this.highlightedFields.length === 0) {
+        this.showConfirmDelivery = true;
+      }
+    },
+
+    isFormComplete(client) {
+      // Check if all photos are uploaded
+      const photoUploadsComplete = client.scenario_elements
+        .filter((element) => element.element_type === "photo_upload")
+        .every(
+          (element) =>
+            this.fileListMap[client.id] &&
+            this.fileListMap[client.id].length >= 2 // Ensure at least two photos are uploaded
+        );
+
+      // Check if all dropdowns are selected
+      const dropdownsComplete = client.scenario_elements
+        .filter((element) => element.element_type === "dropdown")
+        .every((element) => this.selectedValues[element.ordinal]);
+
+      return photoUploadsComplete && dropdownsComplete;
+    },
+
+    removeHighlight(ordinal) {
+      const index = this.highlightedFields.indexOf(ordinal);
+      if (index !== -1) {
+        this.highlightedFields.splice(index, 1);
+      }
     },
   },
 };
@@ -275,7 +335,7 @@ export default {
   flex-direction: column;
   padding: 20px;
   width: 100%;
-  z-index: 30;
+  z-index: 2001;
 }
 .all__info {
   height: 80%;
@@ -390,5 +450,9 @@ export default {
 }
 .time__info span {
   font-weight: 400;
+}
+.highlight-border {
+  border: 1px solid red !important;
+  border-radius: 5px;
 }
 </style>

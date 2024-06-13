@@ -1,12 +1,15 @@
 <template>
   <StopModal />
   <div class="content">
-    <UserPhoto class="user__photo" />
+    <UserPhoto :linkToPhoto="linkToPhoto" class="user__photo" />
     <div class="user__info">
       <UserName :userName="userName" :userLastName="userLastName" />
       <div class="info__id">
         <p v-if="userId">{{ userId }}</p>
         <p class="text-error" v-else-if="!userId">id is not defined</p>
+      </div>
+      <div class="user_token">
+        <p>Ваш токен: {{ userTokenTG }}</p>
       </div>
     </div>
     <Subscription />
@@ -14,22 +17,21 @@
       <BtnAddFreeDelivery />
     </div>
   </div>
-  <!-- <NavigationMenu /> -->
 </template>
 <script>
 import { mapGetters } from "vuex";
 import UserPhoto from "../components/UserPhoto.vue";
 import UserName from "../components/UserName.vue";
-import NavigationMenu from "../components/NavigationMenu.vue";
+
 import Subscription from "../components/Subscription.vue";
-import tg from "../telegram.js";
+
 import BtnAddFreeDelivery from "../components/BtnAddFreeDelivery.vue";
 
 export default {
   components: {
     UserPhoto,
     UserName,
-    NavigationMenu,
+
     Subscription,
     BtnAddFreeDelivery,
   },
@@ -37,6 +39,7 @@ export default {
     return {
       userId: null,
       freeDelivery: null,
+      linkToPhoto: null,
     };
   },
   methods: {
@@ -47,10 +50,16 @@ export default {
       let data = await response.json();
       console.log(data);
       this.freeDelivery = data.free_delivery;
+      this.linkToPhoto = data.photo_url;
     },
   },
   computed: {
-    ...mapGetters(["getUserId", "getUserName", "getUserLastName"]),
+    ...mapGetters([
+      "getUserId",
+      "getUserName",
+      "getUserLastName",
+      "getUserToken",
+    ]),
     userId() {
       return this.getUserId;
     },
@@ -59,6 +68,9 @@ export default {
     },
     userLastName() {
       return this.getUserLastName;
+    },
+    userTokenTG() {
+      return this.getUserToken;
     },
   },
   created() {

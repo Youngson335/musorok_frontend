@@ -1,6 +1,6 @@
 <template>
   <div class="user__photo">
-    <img v-if="image" src="../assets/probnay.jpg" alt="" />
+    <img v-if="image" :src="getPhoto" alt="" />
     <div v-else>
       <p>{{ userNameFirstLetter }}</p>
       <p>{{ userLastNameFirstLetter }}</p>
@@ -19,8 +19,21 @@ export default {
       userLastNameFirstLetter: "",
     };
   },
+  props: {
+    linkToPhoto: {
+      type: String,
+    },
+  },
   computed: {
     ...mapGetters(["getUserName", "getUserLastName"]),
+    getPhoto() {
+      if (this.linkToPhoto !== null) {
+        this.image = true;
+        return this.linkToPhoto;
+      } else {
+        this.image = false;
+      }
+    },
   },
   methods: {
     async updateFirstLetters() {

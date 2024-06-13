@@ -35,6 +35,7 @@ export default {
       type: Array,
     },
   },
+
   computed: {
     getQuestions() {
       return this.questions;
@@ -120,7 +121,7 @@ export default {
   align-items: center;
   flex-direction: column;
   position: absolute;
-  top: 70%;
+  top: 100%;
   height: 30%;
   padding: 20px;
   background: #f3f3f3;
