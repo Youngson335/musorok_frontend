@@ -8,28 +8,30 @@
         <p v-if="userId">{{ userId }}</p>
         <p class="text-error" v-else-if="!userId">id is not defined</p>
       </div>
+      <div class="user_token">
+        <p>Ваш токен: {{ userTokenTG }}</p>
+      </div>
     </div>
     <Subscription />
     <div v-if="freeDelivery === 0" style="width: 100%">
       <BtnAddFreeDelivery />
     </div>
   </div>
-  <!-- <NavigationMenu /> -->
 </template>
 <script>
 import { mapGetters } from "vuex";
 import UserPhoto from "../components/UserPhoto.vue";
 import UserName from "../components/UserName.vue";
-import NavigationMenu from "../components/NavigationMenu.vue";
+
 import Subscription from "../components/Subscription.vue";
-import tg from "../telegram.js";
+
 import BtnAddFreeDelivery from "../components/BtnAddFreeDelivery.vue";
 
 export default {
   components: {
     UserPhoto,
     UserName,
-    NavigationMenu,
+
     Subscription,
     BtnAddFreeDelivery,
   },
@@ -52,7 +54,12 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["getUserId", "getUserName", "getUserLastName"]),
+    ...mapGetters([
+      "getUserId",
+      "getUserName",
+      "getUserLastName",
+      "getUserToken",
+    ]),
     userId() {
       return this.getUserId;
     },
@@ -61,6 +68,9 @@ export default {
     },
     userLastName() {
       return this.getUserLastName;
+    },
+    userTokenTG() {
+      return this.getUserToken;
     },
   },
   created() {

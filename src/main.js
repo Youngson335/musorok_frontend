@@ -7,7 +7,8 @@ import tg from "./telegram.js";
 import store from "./store.js";
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
-import StopModal from "./components/StopModal.vue";
+
+import RegisteredPage from "./pages/RegisteredPage.vue";
 
 const id = store.state.userId;
 let registerUser;
@@ -35,7 +36,10 @@ async function initializeApp() {
   clientFlg = data.client_flg;
 
   if (registerUser === 0 || !registerUser) {
-    const app = createApp(StopModal);
+    const app = createApp(RegisteredPage);
+    app.use(ElementPlus);
+    app.use(store);
+    app.config.globalProperties.$tg = tg;
     app.mount("#notUser");
   } else {
     const app = await appPromise;

@@ -7,7 +7,8 @@ const store = createStore({
       count: 0,
       userName: "",
       userLastName: "",
-      userId: 370078330,
+      userId: 568831746,
+      userTgName: null,
       user: null,
       ivanID: 370078330,
       myId: 1491570929,
@@ -18,6 +19,7 @@ const store = createStore({
       status: null,
       disabledSwitch: true,
       clientFlag: null,
+      tokenTG: null,
     };
   },
   mutations: {
@@ -39,18 +41,33 @@ const store = createStore({
     setClientFlag(state, value) {
       state.clientFlag = value;
     },
+    setTokenTG(state, token) {
+      state.tokenTG = token;
+    },
+    setUserTgName(state, userName) {
+      state.userTgName = userName;
+    },
   },
   actions: {
     // получение id пользователя
     async fetchUserId({ commit }) {
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const id = tg.initDataUnsafe.user.id;
+        const userName = tg.initDataUnsafe.user.username;
         commit("setUserId", id);
+        commit("setUserTgName", userName);
+      }
+    },
+    async fetchTokenTG({ commit }) {
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const token = tg.initDataUnsafe.hash;
+        commit("setTokenTG", token);
       }
     },
     async getUserInfoById({ commit, state, dispatch }) {
       try {
         await dispatch("fetchUserId");
+        await dispatch("fetchTokenTG");
         let response = await fetch(
           `https://musorok.online:8000/client_info/${state.userId}`
         );
@@ -101,6 +118,12 @@ const store = createStore({
     getUserId(state) {
       return state.userId;
     },
+    getUserToken(state) {
+      return state.tokenTG;
+    },
+    getUserTgName(state) {
+      return state.userTgName;
+    },
     getUserName(state) {
       return state.userName;
     },
@@ -132,5 +155,6 @@ const store = createStore({
 });
 store.dispatch("getUserInfoById");
 store.dispatch("getStatus");
+store.dispatch("fetchTokenTG");
 
 export default store;
