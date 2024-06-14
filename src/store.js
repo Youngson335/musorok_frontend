@@ -12,6 +12,7 @@ const store = createStore({
       user: null,
       ivanID: 370078330,
       myId: 1491570929,
+      registerdID: 568831746,
       subscribeDay: null,
       subscribeEnd_dttm: null,
       subscribeStart_dttm: null,

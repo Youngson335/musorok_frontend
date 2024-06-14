@@ -385,7 +385,7 @@ export default {
 
             const userIcon = L.icon({
               iconUrl: myGeoposIconUrl,
-              iconSize: [32],
+              iconSize: [40],
               iconAnchor: [16, 32],
               popupAnchor: [0, -32],
             });
