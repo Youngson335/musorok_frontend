@@ -89,7 +89,12 @@ export default {
           }),
         }
       )
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Ошибка запроса");
+          }
+          return response;
+        })
         .then((data) => {
           console.log("Имя пользователя успешно обновлено на сервере:", data);
           this.getStatus();
