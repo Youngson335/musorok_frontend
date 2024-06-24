@@ -7,11 +7,12 @@ const store = createStore({
       count: 0,
       userName: "",
       userLastName: "",
-      userId: 568831746,
-      userTgName: null,
+      userId: 370078330,
+      userTgName: "young_son335",
       user: null,
       ivanID: 370078330,
       myId: 1491570929,
+      registerdID: 568831746,
       subscribeDay: null,
       subscribeEnd_dttm: null,
       subscribeStart_dttm: null,
@@ -54,6 +55,7 @@ const store = createStore({
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const id = tg.initDataUnsafe.user.id;
         const userName = tg.initDataUnsafe.user.username;
+        console.log(JSON.stringify(tg.initDataUnsafe));
         commit("setUserId", id);
         commit("setUserTgName", userName);
       }

@@ -12,12 +12,32 @@
       action="javascript:void(0);"
     >
       <el-form-item label="Имя">
-        <input v-model="formLabelAlign.name" placeholder="обязательно" />
+        <input v-model="formLabelAlign.firstName" placeholder="Иван" />
       </el-form-item>
       <el-form-item label="Фамилия">
-        <input v-model="formLabelAlign.firstName" placeholder="обязательно" />
+        <input v-model="formLabelAlign.lastName" placeholder="Иванов" />
       </el-form-item>
-      <el-form-item label="Город">
+      <el-form-item label="Номер">
+        <div class="form__phone">
+          <p>+7</p>
+          <input
+            placeholder="ХХХХХХХХХХ"
+            type="number"
+            v-model="formLabelAlign.phone"
+            oninput="this.value = this.value.slice(0, 10)"
+          />
+          <button
+            v-loading="loadPhone"
+            :disabled="checkPhone"
+            plain
+            :plain="true"
+            @click="sendPhone"
+          >
+            Проверить
+          </button>
+        </div>
+      </el-form-item>
+      <el-form-item label="Адрес">
         <div class="form__address">
           <input v-model="formLabelAlign.region" :placeholder="placeAddress" />
           <button
@@ -28,10 +48,10 @@
             Проверить
           </button>
         </div>
-        <p>Например: город Свободный улица Перская дом 62</p>
-      </el-form-item>
-      <el-form-item label="Почта" class="email">
-        <input v-model="formLabelAlign.email" placeholder="не обязательно" />
+        <p>
+          Введите адрес с указанием квартиры (если имеется) и нажмите
+          «Проверить»
+        </p>
       </el-form-item>
     </el-form>
 
@@ -40,9 +60,19 @@
         class="save__info--btn"
         @click="postAllInfo"
         :disabled="stateBtnSaveAllInfo"
+        v-loading="loadAllData"
       >
         Зарегистрироваться
       </button>
+    </div>
+    <div class="description">
+      <p>
+        Регистрируясь в нашем сервисе, вы даёте согласие на обработку
+        персональных данных.<a
+          href="https://telegra.ph/Politika-v-otnoshenii-obrabotki-personalnyh-dannyh-05-27-2"
+          >Политика в отношении обработки персональных данных</a
+        >
+      </p>
     </div>
   </form>
 
@@ -55,49 +85,134 @@
       </div>
     </template>
   </el-dialog>
+
+  <el-dialog
+    v-model="dialTheNumber"
+    width="500"
+    destroy-on-close
+    center
+    class="modal__confirm"
+  >
+    <h4>Подтверждение номера при регистрации</h4>
+    <div class="confirm__phone" v-show="showCallPhone">
+      <p>
+        Позвоните на служебный номер, чтобы подтвердить вход -
+        <strong> звонок бесплатный!</strong>
+      </p>
+      <button @click="callToNumber">8 800 555-86-07</button>
+      <button
+        class="confirm__sms"
+        v-show="showBtnSMS"
+        @click="phoneConfirmationBySms"
+      >
+        Отправить смс
+      </button>
+    </div>
+    <div v-show="showInputSMS" class="form__code">
+      <input
+        v-model="formLabelAlign.sms"
+        placeholder="Введите код"
+        oninput="this.value = this.value.slice(0, 6)"
+      />
+      <button v-loading="loadSMS" :disabled="checkSMS" @click="postSMSCode">
+        Отправить
+      </button>
+    </div>
+    <Timer class="timer" v-show="showTimer" @showSMSButton="showSMSButton" />
+  </el-dialog>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
+import { ElMessage } from "element-plus";
+import Timer from "../components/Timer.vue";
 
 export default {
+  components: {
+    Timer,
+  },
   data() {
     return {
       labelPosition: "left",
       formLabelAlign: {
-        name: "",
+        lastName: "",
         firstName: "",
         region: "",
-        email: "",
+        phone: "",
+        sms: "",
       },
       centerDialogVisible: false,
       fullAddress: "",
-      placeAddress: "обязательно",
+      placeAddress: "Москва, ул. Арбатская, д. 1, кв. 1",
       loading: false,
       checkAddress: "",
+      valuePhone: 914,
+      userPhone: null,
+      dialTheNumber: false,
+      loadPhone: false,
+      loadAllData: false,
+      loadSMS: false,
+      geoData: null,
+      initialPhone: null,
+      showBtnSMS: false,
+      showInputSMS: false,
+      showCallPhone: true,
+      showTimer: true,
+      callStatus: null,
+      updatePhoneStatus: null,
     };
   },
   computed: {
-    ...mapGetters(["getUserId"]),
+    ...mapGetters(["getUserId", "getUserTgName"]),
     userID() {
       return this.getUserId;
+    },
+    userTgName() {
+      return this.getUserTgName;
     },
     stateBtnCheckAddress() {
       if (this.formLabelAlign.region != "") {
         return false;
-      } else return true;
+      } else {
+        this.formLabelAlign.region = "";
+        return true;
+      }
     },
     stateBtnSaveAllInfo() {
       if (
-        this.formLabelAlign.name != "" &&
         this.formLabelAlign.firstName != "" &&
+        this.formLabelAlign.lastName != "" &&
+        this.initialPhone != null &&
         this.fullAddress != ""
       ) {
         return false;
       } else return true;
     },
+    checkPhone() {
+      let strPhone = String(this.formLabelAlign.phone);
+      if (strPhone.length === 10) {
+        this.showCallPhone = true;
+        this.showInputSMS = false;
+        return false;
+      } else {
+        this.userPhone = null;
+        return true;
+      }
+    },
+    checkSMS() {
+      let strSMS = String(this.formLabelAlign.sms);
+      if (strSMS.length === 6) {
+        return false;
+      } else {
+        return true;
+      }
+    },
   },
   methods: {
+    showSMSButton(boolean) {
+      this.showBtnSMS = boolean;
+      this.showTimer = false;
+    },
     async postAddress() {
       if (this.formLabelAlign.region != "") {
         this.loading = true;
@@ -120,6 +235,9 @@ export default {
             throw new Error("Ошибка отправки запроса");
           }
           let data = await response.json();
+          this.geoData = data;
+          console.log(this.geoData);
+
           this.checkAddress = data.formatted_address;
           this.loading = false;
           this.centerDialogVisible = true;
@@ -130,6 +248,54 @@ export default {
         }
       }
     },
+    async sendPhone() {
+      this.loadPhone = true;
+      let phone = "7";
+      this.userPhone = phone + this.formLabelAlign.phone;
+
+      if (this.callStatus === null) {
+        await fetch(
+          `https://musorok.online:8000/phone_calls/initiate_check_call/`,
+          {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              phone: this.userPhone,
+              client_id: this.userID,
+            }),
+          }
+        )
+          .then((response) => {
+            if (!response.ok) {
+              ElMessage.error("Ошибка номера!");
+              this.loadPhone = false;
+              this.callStatus = null;
+              throw Error("Произошли ошибка запроса!");
+            } else return response;
+          })
+          .then((data) => {
+            console.log("Данные отправлены!", data);
+            this.loadPhone = false;
+            this.dialTheNumber = true;
+          })
+          .catch((error) => {
+            ElMessage.error("Произошла системная ошибка!");
+            this.loadPhone = false;
+            console.error("Произошла ошибка!", error);
+          });
+      } else {
+        this.loadPhone = false;
+        this.dialTheNumber = true;
+      }
+      if (this.callStatus !== "pincode_ok") {
+        this.confirmTheNumber();
+      } else {
+        console.log("прекратил вывод!");
+      }
+    },
     saveAddress() {
       this.centerDialogVisible = false;
       this.fullAddress = this.checkAddress;
@@ -137,11 +303,180 @@ export default {
     removeAddress() {
       this.formLabelAlign.region = "";
       this.fullAddress = "";
-      this.placeAddress = "обязательно";
+      this.placeAddress = "Москва, ул. Арбатская, д. 1, кв. 1";
       this.centerDialogVisible = false;
     },
     async postAllInfo() {
-      console.log("Пользователь зарегестрован!");
+      this.loadAllData = true;
+      let prob = {
+        client_id: this.userID,
+        first_name: this.formLabelAlign.firstName,
+        last_name: this.formLabelAlign.lastName,
+        username: this.userTgName,
+        number_phone: this.initialPhone,
+        geo: this.geoData,
+      };
+      console.log(prob);
+      console.log(JSON.stringify(prob));
+      await fetch(`https://musorok.online:8000/register_user`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: this.userID,
+          first_name: this.formLabelAlign.firstName,
+          last_name: this.formLabelAlign.lastName,
+          username: this.userTgName,
+          number_phone: this.initialPhone,
+          geo: this.geoData,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            this.loadAllData = false;
+            ElMessage.error("Ошибка регистрации!");
+            throw new Error("Ошибка отправки запроса!");
+          } else return response;
+        })
+        .then((data) => {
+          console.log("Данные отправлены!", data);
+          this.loadAllData = false;
+          ElMessage.success("Вы зарегистрированы!");
+          window.location.reload();
+        })
+        .catch((error) => {
+          this.loadAllData = false;
+          ElMessage.error("Произошла ошибка!");
+          console.error("Проищошла ошибка:", error);
+        });
+    },
+    async phoneConfirmationBySms() {
+      const id = String(this.userID);
+
+      await fetch(`https://musorok.online:8000/phone_sms/send/`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: this.userPhone,
+          client_id: id,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            ElMessage.error("Ошибка получения смс!");
+            throw new Error("Ошибка получения смс!");
+          } else return response;
+        })
+        .then((data) => {
+          console.log("запрос отправлен!", data);
+          this.showCallPhone = false;
+          this.showInputSMS = true;
+          this.showTimer = false;
+        })
+        .catch((error) => {
+          ElMessage.error("Ошибка запроса смс!");
+          console.error("Произошла системная ошибка!", error);
+        });
+    },
+    async postSMSCode() {
+      this.loadSMS = true;
+      const id = String(this.userID);
+      const code = this.formLabelAlign.sms;
+      await fetch(`https://musorok.online:8000/phone_sms/verify/`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: this.userPhone,
+          client_id: id,
+          verification_code: this.formLabelAlign.sms,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            this.loadSMS = false;
+            ElMessage.error("Ошибка подтверждения номера!");
+            throw new Error("Ошибка подтверждения номера!");
+          } else return response;
+        })
+        .then((data) => {
+          this.loadSMS = false;
+          console.log("Номер подтвержден!", data);
+          this.callStatus = "pincode_ok";
+          ElMessage.success("Номер подтвержден!");
+          this.initialPhone = this.userPhone;
+          this.dialTheNumber = false;
+        })
+        .catch((err) => {
+          this.loadSMS = false;
+          ElMessage.error("Ошибка подтверждения номера!");
+          console.error("Ошибка подтверждения номера!", err);
+        });
+    },
+    callToNumber() {
+      window.location.href = "tel:88005558607";
+    },
+    confirmTheNumber() {
+      console.log(this.userTgName);
+      let prob = {
+        phone: this.userPhone,
+        id: this.userID,
+      };
+      console.log(prob);
+
+      let confirmNumber = setInterval(async () => {
+        try {
+          let response = await fetch(
+            `https://musorok.online:8000/phone_calls/check_check_call_status/`,
+            {
+              method: "POST",
+              headers: {
+                accept: "application/json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                phone: this.userPhone,
+                client_id: this.userID,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            console.log("Ошибка запроса");
+            this.callStatus = null;
+            clearInterval(confirmNumber);
+            return;
+          }
+
+          let data = await response.json();
+          if (this.callStatus === "pincode_ok") {
+            this.callStatus === "pincode_ok";
+          } else {
+            this.callStatus = data.status;
+            console.log("получил данные!", data);
+            this.updatePhoneStatus = data.status;
+            if (data.status === "expires") {
+              this.callStatus = null;
+            }
+            if (data.status == "pincode_ok") {
+              console.log("подтвердил", data);
+              this.initialPhone = this.userPhone;
+              clearInterval(confirmNumber);
+              this.dialTheNumber = false;
+            }
+          }
+        } catch (err) {
+          console.log(err);
+          clearInterval(confirmNumber);
+        }
+      }, 3000);
     },
   },
 };
@@ -150,13 +485,12 @@ export default {
 .header {
   padding: 20px;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 .header img {
   width: 70px;
   display: inline-block;
-  padding-top: 9px;
 }
 .header h1 {
   font-weight: 200;
@@ -180,9 +514,7 @@ input {
   padding: 8px;
   border-radius: 5px;
 }
-.email input::placeholder {
-  color: rgba(27, 26, 26, 0.563);
-}
+
 .el-form {
   margin-bottom: 50px;
 }
@@ -190,6 +522,7 @@ input {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-bottom: 10px;
 }
 .save__info--btn {
   font-family: "Montserrat", sans-serif;
@@ -222,6 +555,9 @@ input {
 .form__address input:focus-visible {
   outline: none;
 }
+.form__address input::placeholder {
+  font-size: 9px;
+}
 .form__address button {
   border: none;
   background: none;
@@ -237,6 +573,127 @@ input {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
+}
+.form__phone {
+  border: 1px solid rgba(0, 0, 0, 0.261);
+  border-radius: 5px;
+  background-color: rgba(229, 229, 229, 0.358);
+}
+.form__phone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.form__phone p {
+  font-size: 15px;
+  padding: 5px;
+}
+.form__phone input {
+  background: none;
+  border: none;
+  font-size: 15px;
+}
+.form__phone input:focus-visible {
+  outline: none !important;
+}
+.form__phone input::placeholder {
+  font-size: 15px;
+}
+.form__phone button {
+  border: none;
+  background: none;
+  font-family: "Montserrat", sans-serif;
+  padding: 8px;
+  text-transform: lowercase;
+  border-left: 1px solid rgba(0, 0, 0, 0.261);
+  background-color: white;
+  box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.5);
+  border-radius: 10px 5px 5px 10px;
+}
+.form__code {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.261);
+  border-radius: 5px;
+  background-color: rgba(229, 229, 229, 0.358);
+  animation: showBtnSMS 0.3s ease;
+}
+.form__code p {
+  font-size: 15px;
+  padding: 5px;
+}
+.form__code input {
+  background: none;
+  border: none;
+  font-size: 15px;
+}
+.form__code input:focus-visible {
+  outline: none !important;
+}
+.form__code input::placeholder {
+  font-size: 15px;
+  color: rgba(0, 0, 0, 0.38);
+}
+.form__code button {
+  border: none;
+  background: none;
+  font-family: "Montserrat", sans-serif;
+  padding: 8px;
+  text-transform: lowercase;
+  border-left: 1px solid rgba(0, 0, 0, 0.261);
+  background-color: white;
+  box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.5);
+  border-radius: 10px 5px 5px 10px;
+}
+
+.description p {
+  font-size: 10px;
+  text-align: center;
+}
+a {
+  color: blue;
+}
+h4 {
+  text-align: center;
+  line-height: 13px;
+  margin-bottom: 10px;
+}
+.modal__confirm p {
+  text-align: center;
+  margin-bottom: 10px;
+}
+.confirm__phone {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.confirm__phone button {
+  border: none;
+  padding: 5px 10px;
+  font-size: 18px;
+  border-radius: 5px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 600;
+  color: #606266;
+  margin-bottom: 10px;
+}
+.confirm__sms {
+  animation: showBtnSMS 0.3s ease;
+}
+
+@keyframes showBtnSMS {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
 }
 </style>
 
@@ -256,5 +713,8 @@ input {
 .el-loading-mask {
   border-radius: 10px 5px 5px 10px;
   background-color: rgb(255 255 255 / 70%);
+}
+.el-dialog__header {
+  display: none;
 }
 </style>
