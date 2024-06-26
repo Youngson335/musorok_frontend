@@ -1,125 +1,130 @@
 <template lang="">
-  <div class="header">
-    <h1>Регистрация</h1>
-    <img src="../assets/icons/me_geoposition.png" />
-  </div>
-
-  <form class="registration--form" action="javascript:void(0);">
-    <el-form
-      :label-position="labelPosition"
-      label-width="auto"
-      :model="formLabelAlign"
-      action="javascript:void(0);"
-    >
-      <el-form-item label="Имя">
-        <input v-model="formLabelAlign.firstName" placeholder="Иван" />
-      </el-form-item>
-      <el-form-item label="Фамилия">
-        <input v-model="formLabelAlign.lastName" placeholder="Иванов" />
-      </el-form-item>
-      <el-form-item label="Номер">
-        <div class="form__phone">
-          <p>+7</p>
-          <input
-            placeholder="ХХХХХХХХХХ"
-            type="number"
-            v-model="formLabelAlign.phone"
-            oninput="this.value = this.value.slice(0, 10)"
-          />
-          <button
-            v-loading="loadPhone"
-            :disabled="checkPhone"
-            plain
-            :plain="true"
-            @click="sendPhone"
-          >
-            Проверить
-          </button>
-        </div>
-      </el-form-item>
-      <el-form-item label="Адрес">
-        <div class="form__address">
-          <input v-model="formLabelAlign.region" :placeholder="placeAddress" />
-          <button
-            v-loading="loading"
-            @click="postAddress()"
-            :disabled="stateBtnCheckAddress"
-          >
-            Проверить
-          </button>
-        </div>
-        <p>
-          Введите адрес с указанием квартиры (если имеется) и нажмите
-          «Проверить»
-        </p>
-      </el-form-item>
-    </el-form>
-
-    <div class="save__info">
-      <button
-        class="save__info--btn"
-        @click="postAllInfo"
-        :disabled="stateBtnSaveAllInfo"
-        v-loading="loadAllData"
-      >
-        Зарегистрироваться
-      </button>
+  <div v-loading="confirmLoad">
+    <div class="header">
+      <h1>Регистрация</h1>
+      <img src="../assets/icons/me_geoposition.png" />
     </div>
-    <div class="description">
-      <p>
-        Регистрируясь в нашем сервисе, вы даёте согласие на обработку
-        персональных данных.<a
-          href="https://telegra.ph/Politika-v-otnoshenii-obrabotki-personalnyh-dannyh-05-27-2"
-          >Политика в отношении обработки персональных данных</a
+
+    <form class="registration--form" action="javascript:void(0);">
+      <el-form
+        :label-position="labelPosition"
+        label-width="auto"
+        :model="formLabelAlign"
+        action="javascript:void(0);"
+      >
+        <el-form-item label="Имя">
+          <input v-model="formLabelAlign.firstName" placeholder="Иван" />
+        </el-form-item>
+        <el-form-item label="Фамилия">
+          <input v-model="formLabelAlign.lastName" placeholder="Иванов" />
+        </el-form-item>
+        <el-form-item label="Номер">
+          <div class="form__phone">
+            <p>+7</p>
+            <input
+              placeholder="ХХХХХХХХХХ"
+              type="number"
+              v-model="formLabelAlign.phone"
+              oninput="this.value = this.value.slice(0, 10)"
+            />
+            <button
+              v-loading="loadPhone"
+              :disabled="checkPhone"
+              plain
+              :plain="true"
+              @click="sendPhone"
+            >
+              Проверить
+            </button>
+          </div>
+        </el-form-item>
+        <el-form-item label="Адрес">
+          <div class="form__address">
+            <input
+              v-model="formLabelAlign.region"
+              :placeholder="placeAddress"
+            />
+            <button
+              v-loading="loading"
+              @click="postAddress()"
+              :disabled="stateBtnCheckAddress"
+            >
+              Проверить
+            </button>
+          </div>
+          <p>
+            Введите адрес с указанием квартиры (если имеется) и нажмите
+            «Проверить»
+          </p>
+        </el-form-item>
+      </el-form>
+
+      <div class="save__info">
+        <button
+          class="save__info--btn"
+          @click="postAllInfo"
+          :disabled="stateBtnSaveAllInfo"
+          v-loading="loadAllData"
         >
-      </p>
-    </div>
-  </form>
-
-  <el-dialog v-model="centerDialogVisible" center>
-    <span> Ваш адрес: {{ checkAddress }} </span>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="removeAddress">Нет</el-button>
-        <el-button type="primary" @click="saveAddress"> Да </el-button>
+          Зарегистрироваться
+        </button>
       </div>
-    </template>
-  </el-dialog>
+      <div class="description">
+        <p>
+          Регистрируясь в нашем сервисе, вы даёте согласие на обработку
+          персональных данных.<a
+            href="https://telegra.ph/Politika-v-otnoshenii-obrabotki-personalnyh-dannyh-05-27-2"
+            >Политика в отношении обработки персональных данных</a
+          >
+        </p>
+      </div>
+    </form>
 
-  <el-dialog
-    v-model="dialTheNumber"
-    width="500"
-    destroy-on-close
-    center
-    class="modal__confirm"
-  >
-    <h4>Подтверждение номера при регистрации</h4>
-    <div class="confirm__phone" v-show="showCallPhone">
-      <p>
-        Позвоните на служебный номер, чтобы подтвердить вход -
-        <strong> звонок бесплатный!</strong>
-      </p>
-      <button @click="callToNumber">8 800 555-86-07</button>
-      <button
-        class="confirm__sms"
-        v-show="showBtnSMS"
-        @click="phoneConfirmationBySms"
-      >
-        Отправить смс
-      </button>
-    </div>
-    <div v-show="showInputSMS" class="form__code">
-      <input
-        v-model="formLabelAlign.sms"
-        placeholder="Введите код"
-        oninput="this.value = this.value.slice(0, 6)"
-      />
-      <button v-loading="loadSMS" :disabled="checkSMS" @click="postSMSCode">
-        Отправить
-      </button>
-    </div>
-    <Timer class="timer" v-show="showTimer" @showSMSButton="showSMSButton" />
-  </el-dialog>
+    <el-dialog v-model="centerDialogVisible" center>
+      <span> Ваш адрес: {{ checkAddress }} </span>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="removeAddress">Нет</el-button>
+          <el-button type="primary" @click="saveAddress"> Да </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="dialTheNumber"
+      width="500"
+      destroy-on-close
+      center
+      class="modal__confirm"
+    >
+      <h4>Подтверждение номера при регистрации</h4>
+      <div class="confirm__phone" v-show="showCallPhone">
+        <p>
+          Позвоните на служебный номер, чтобы подтвердить вход -
+          <strong> звонок бесплатный!</strong>
+        </p>
+        <button @click="callToNumber">8 800 555-86-07</button>
+        <button
+          class="confirm__sms"
+          v-show="showBtnSMS"
+          @click="phoneConfirmationBySms"
+        >
+          Отправить смс
+        </button>
+      </div>
+      <div v-show="showInputSMS" class="form__code">
+        <input
+          v-model="formLabelAlign.sms"
+          placeholder="Введите код"
+          oninput="this.value = this.value.slice(0, 6)"
+        />
+        <button v-loading="loadSMS" :disabled="checkSMS" @click="postSMSCode">
+          Отправить
+        </button>
+      </div>
+      <Timer class="timer" v-show="showTimer" @showSMSButton="showSMSButton" />
+    </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -160,6 +165,7 @@ export default {
       showTimer: true,
       callStatus: null,
       updatePhoneStatus: null,
+      confirmLoad: false,
     };
   },
   computed: {
@@ -190,6 +196,9 @@ export default {
     },
     checkPhone() {
       let strPhone = String(this.formLabelAlign.phone);
+      if (this.callStatus === "pincode_ok") {
+        return true;
+      }
       if (strPhone.length === 10) {
         this.showCallPhone = true;
         this.showInputSMS = false;
@@ -252,6 +261,12 @@ export default {
       this.loadPhone = true;
       let phone = "7";
       this.userPhone = phone + this.formLabelAlign.phone;
+
+      // this.callStatus = "pincode_ok";
+      //     this.confirmLoad = false;
+      //     ElMessage.success("Номер подтвержден!");
+      //     this.initialPhone = this.userPhone;
+      //     this.dialTheNumber = false;
 
       if (this.callStatus === null) {
         await fetch(
@@ -385,6 +400,7 @@ export default {
     },
     async postSMSCode() {
       this.loadSMS = true;
+      this.confirmLoad = true;
       const id = String(this.userID);
       const code = this.formLabelAlign.sms;
       await fetch(`https://musorok.online:8000/phone_sms/verify/`, {
@@ -403,6 +419,7 @@ export default {
           if (!response.ok) {
             this.loadSMS = false;
             ElMessage.error("Ошибка подтверждения номера!");
+            this.confirmLoad = false;
             throw new Error("Ошибка подтверждения номера!");
           } else return response;
         })
@@ -410,12 +427,14 @@ export default {
           this.loadSMS = false;
           console.log("Номер подтвержден!", data);
           this.callStatus = "pincode_ok";
+          this.confirmLoad = false;
           ElMessage.success("Номер подтвержден!");
           this.initialPhone = this.userPhone;
           this.dialTheNumber = false;
         })
         .catch((err) => {
           this.loadSMS = false;
+          this.confirmLoad = false;
           ElMessage.error("Ошибка подтверждения номера!");
           console.error("Ошибка подтверждения номера!", err);
         });
@@ -468,6 +487,8 @@ export default {
             if (data.status == "pincode_ok") {
               console.log("подтвердил", data);
               this.initialPhone = this.userPhone;
+              this.callStatus = "pincode_ok";
+              ElMessage.success("Номер подтвержден!");
               clearInterval(confirmNumber);
               this.dialTheNumber = false;
             }
@@ -616,10 +637,8 @@ input {
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.261);
-  border-radius: 5px;
-  background-color: rgba(229, 229, 229, 0.358);
-  animation: showBtnSMS 0.3s ease;
+  flex-direction: column;
+  animation: showBtnSMS-11a8829b 0.3s ease;
 }
 .form__code p {
   font-size: 15px;
@@ -628,7 +647,12 @@ input {
 .form__code input {
   background: none;
   border: none;
+  border-bottom: 1px solid gray;
   font-size: 15px;
+  border-radius: 0px;
+  text-align: center;
+  width: 50%;
+  margin-bottom: 15px;
 }
 .form__code input:focus-visible {
   outline: none !important;
@@ -638,15 +662,12 @@ input {
   color: rgba(0, 0, 0, 0.38);
 }
 .form__code button {
-  border: none;
-  background: none;
   font-family: "Montserrat", sans-serif;
   padding: 8px;
   text-transform: lowercase;
-  border-left: 1px solid rgba(0, 0, 0, 0.261);
-  background-color: white;
-  box-shadow: -5px 0 5px -5px rgba(0, 0, 0, 0.5);
-  border-radius: 10px 5px 5px 10px;
+  background-color: #ffb651;
+  border: none;
+  border-radius: 20px;
 }
 
 .description p {

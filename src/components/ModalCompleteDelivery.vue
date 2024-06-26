@@ -155,6 +155,9 @@ export default {
       this.saveID = this.clickedInfoUser.clickedInfo.id;
       return this.clickedInfoUser.clickedInfo.id;
     },
+    saveActionsId() {
+      return this.saveID;
+    },
   },
   methods: {
     ...mapGetters(["getUserId"]),
@@ -233,6 +236,7 @@ export default {
       let info = this.checkInfoUser;
       let selectVar = this.selectedValues;
       let result;
+      console.log(this.saveID);
 
       function getProxyObj(info) {
         for (let prop in info) {
@@ -256,9 +260,10 @@ export default {
         };
         saveQuestions.push(questionObj);
       });
+      console.log(this.clickedInfoUser.clickedInfo.id);
 
       let questions = {
-        meeting_id: this.saveID,
+        meeting_id: this.clickedInfoUser.clickedInfo.id,
         questions: saveQuestions,
       };
 
@@ -454,5 +459,10 @@ export default {
 .highlight-border {
   border: 1px solid red !important;
   border-radius: 5px;
+}
+</style>
+<style>
+.el-upload-list__item-file-name {
+  display: none;
 }
 </style>
