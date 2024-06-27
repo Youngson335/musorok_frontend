@@ -80,17 +80,20 @@
         </div>
       </div>
     </div>
+
     <div v-else class="no__active">
-      <p>
-        Для оформления подписки воспользуйтесь пунктом меню "Выбрать тариф" в
-        телеграмм боте
-      </p>
+      <Tariffs />
     </div>
   </div>
 </template>
 <script>
 import { mapGetters } from "vuex";
+import Tariffs from "./Tariffs.vue";
+
 export default {
+  components: {
+    Tariffs,
+  },
   data() {
     return {
       subscribeDay: null,
@@ -135,7 +138,7 @@ export default {
   display: flex;
   justify-content: start;
   align-items: center;
-  padding: 20px;
+  padding: 10px 20px;
 }
 .subscription__info h3 {
   margin-right: 20px;

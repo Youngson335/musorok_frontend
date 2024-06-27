@@ -12,7 +12,7 @@ export default {
     };
   },
   mounted() {
-    let timeLeft = 15;
+    let timeLeft = 59;
     const countdownElement = document.getElementById("countdown");
     const timerText = document.querySelector(".timer__text");
     const countdownTimer = setInterval(() => {

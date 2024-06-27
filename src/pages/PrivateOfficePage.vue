@@ -12,10 +12,10 @@
         <p>Ваш токен: {{ userTokenTG }}</p>
       </div>
     </div>
-    <Subscription />
     <div v-if="freeDelivery === 0" style="width: 100%">
       <BtnAddFreeDelivery />
     </div>
+    <Subscription />
   </div>
 </template>
 <script>

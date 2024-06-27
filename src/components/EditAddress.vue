@@ -5,9 +5,7 @@
     </div>
     <p :class="{ noEdit: !editAddress }">{{ userAddress }}</p>
   </div>
-  <a href="https://tg.musorok.online/validationAddress//validation.html">
-    <ButtonEditAddress />
-  </a>
+  <p>Чтобы изменить адрес, обратитесь в тех. поддержку!</p>
 </template>
 <script>
 import { mapGetters } from "vuex";

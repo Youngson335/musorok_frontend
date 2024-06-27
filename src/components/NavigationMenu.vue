@@ -172,7 +172,7 @@ export default {
 </script>
 <style lang="css">
 .menu {
-  position: absolute;
+  position: fixed;
   bottom: 0;
   right: 0;
   left: 0;
@@ -185,6 +185,7 @@ export default {
   background: #fcfcfc;
   animation: 1s showNav ease;
   z-index: 2000;
+  box-shadow: 0 0 15px 0px rgb(0 0 0 / 50%);
 }
 .menu__link {
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
