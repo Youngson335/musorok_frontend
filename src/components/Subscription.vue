@@ -1,8 +1,8 @@
 <template>
   <div class="subscription">
     <div class="subscription__info">
-      <h3>Подписка:</h3>
       <div v-if="subscribeDay !== null" class="info__true">
+        <h3>Подписка:</h3>
         <p>Активна</p>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -12,19 +12,6 @@
           <path
             fill="currentColor"
             d="M406.656 706.944 195.84 496.256a32 32 0 1 0-45.248 45.248l256 256 512-512a32 32 0 0 0-45.248-45.248L406.592 706.944z"
-          ></path>
-        </svg>
-      </div>
-      <div v-else class="info__false">
-        <p>Не активна</p>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1024 1024"
-          data-v-ea893728=""
-        >
-          <path
-            fill="currentColor"
-            d="M764.288 214.592 512 466.88 259.712 214.592a31.936 31.936 0 0 0-45.12 45.12L466.752 512 214.528 764.224a31.936 31.936 0 1 0 45.12 45.184L512 557.184l252.288 252.288a31.936 31.936 0 0 0 45.12-45.12L557.12 512.064l252.288-252.352a31.936 31.936 0 1 0-45.12-45.184z"
           ></path>
         </svg>
       </div>
@@ -186,5 +173,6 @@ export default {
 .no__active {
   padding: 0 20px;
   text-align: start;
+  margin-bottom: 100px;
 }
 </style>
