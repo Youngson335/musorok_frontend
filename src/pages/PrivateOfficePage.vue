@@ -8,9 +8,6 @@
         <p v-if="userId">{{ userId }}</p>
         <p class="text-error" v-else-if="!userId">id is not defined</p>
       </div>
-      <div class="user_token">
-        <p>Ваш токен: {{ userTokenTG }}</p>
-      </div>
     </div>
     <div v-if="freeDelivery === 0" style="width: 100%">
       <BtnAddFreeDelivery />

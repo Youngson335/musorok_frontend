@@ -7,6 +7,8 @@ import tg from "./telegram.js";
 import store from "./store.js";
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 import RegisteredPage from "./pages/RegisteredPage.vue";
 
@@ -26,6 +28,7 @@ async function initializeApp() {
   const appPromise = (async () => {
     const app = createApp(App);
     app.use(ElementPlus);
+    app.use(L);
     app.use(store);
     app.config.globalProperties.$tg = tg;
     return app;
@@ -37,6 +40,7 @@ async function initializeApp() {
 
   if (registerUser === 0 || !registerUser) {
     const app = createApp(RegisteredPage);
+    app.use(L);
     app.use(ElementPlus);
     app.use(store);
     app.config.globalProperties.$tg = tg;
