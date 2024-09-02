@@ -7,7 +7,7 @@ const store = createStore({
       count: 0,
       userName: "",
       userLastName: "",
-      userId: 370078330,
+      userId: 568831746,
       userTgName: "young_son335",
       user: null,
       ivanID: 370078330,
@@ -21,6 +21,7 @@ const store = createStore({
       disabledSwitch: true,
       clientFlag: null,
       tokenTG: null,
+      validationUser: null,
     };
   },
   mutations: {
@@ -48,6 +49,9 @@ const store = createStore({
     setUserTgName(state, userName) {
       state.userTgName = userName;
     },
+    setValidationUser(state, data) {
+      state.validationUser = data;
+    },
   },
   actions: {
     // получение id пользователя
@@ -56,6 +60,7 @@ const store = createStore({
         const id = tg.initDataUnsafe.user.id;
         const userName = tg.initDataUnsafe.user.username;
         console.log(JSON.stringify(tg.initDataUnsafe));
+        commit("setValidationUser", JSON.stringify(tg.initDataUnsafe));
         commit("setUserId", id);
         commit("setUserTgName", userName);
       }
@@ -152,6 +157,9 @@ const store = createStore({
     },
     getClientFlag(state) {
       return state.clientFlag;
+    },
+    getValidationClient(state) {
+      return state.validationUser;
     },
   },
 });

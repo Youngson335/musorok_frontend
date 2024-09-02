@@ -1,5 +1,5 @@
 <template lang="">
-  <div v-loading="confirmLoad">
+  <div v-loading="confirmLoad" v-if="validUser === true">
     <div class="header">
       <h1>Регистрация</h1>
       <img src="../assets/icons/me_geoposition.png" />
@@ -98,21 +98,7 @@
       class="modal__confirm"
     >
       <h4>Подтверждение номера при регистрации</h4>
-      <div class="confirm__phone" v-show="showCallPhone">
-        <p>
-          Позвоните на служебный номер, чтобы подтвердить вход -
-          <strong> звонок бесплатный!</strong>
-        </p>
-        <button @click="callToNumber">8 800 555-86-07</button>
-        <button
-          class="confirm__sms"
-          v-show="showBtnSMS"
-          @click="phoneConfirmationBySms"
-        >
-          Отправить смс
-        </button>
-      </div>
-      <div v-show="showInputSMS" class="form__code">
+      <div class="form__code">
         <input
           v-model="formLabelAlign.sms"
           placeholder="Введите код"
@@ -122,20 +108,16 @@
           Отправить
         </button>
       </div>
-      <Timer class="timer" v-show="showTimer" @showSMSButton="showSMSButton" />
     </el-dialog>
   </div>
+  <div v-else class="not_userValid">Доступ запрещен 403</div>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
 import { ElMessage } from "element-plus";
-import Timer from "../components/Timer.vue";
 
 export default {
-  components: {
-    Timer,
-  },
   data() {
     return {
       labelPosition: "left",
@@ -162,14 +144,17 @@ export default {
       showBtnSMS: false,
       showInputSMS: false,
       showCallPhone: true,
-      showTimer: true,
       callStatus: null,
       updatePhoneStatus: null,
       confirmLoad: false,
+      validUser: true,
     };
   },
   computed: {
-    ...mapGetters(["getUserId", "getUserTgName"]),
+    ...mapGetters(["getUserId", "getUserTgName", "getValidationClient"]),
+    validationClient() {
+      return this.getValidationClient;
+    },
     userID() {
       return this.getUserId;
     },
@@ -218,9 +203,36 @@ export default {
     },
   },
   methods: {
+    async getInfoValidateUser() {
+      await fetch(`https://musorok.online:8000/validate_client`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: this.validationClient,
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Ошибка валидации пользователя");
+          } else {
+            return response;
+          }
+        })
+        .then((data) => {
+          console.log("Валидация прошла", data);
+          return data.json();
+        })
+        .then((jsonData) => {
+          // this.validUser = jsonData.valid;
+          // console.log(this.validUser);
+        })
+        .catch((err) => {
+          console.error("Произлшла ошибка валидации, ", err);
+        });
+    },
     showSMSButton(boolean) {
       this.showBtnSMS = boolean;
-      this.showTimer = false;
     },
     async postAddress() {
       if (this.formLabelAlign.region != "") {
@@ -262,12 +274,6 @@ export default {
       let phone = "7";
       this.userPhone = phone + this.formLabelAlign.phone;
 
-      // this.callStatus = "pincode_ok";
-      //     this.confirmLoad = false;
-      //     ElMessage.success("Номер подтвержден!");
-      //     this.initialPhone = this.userPhone;
-      //     this.dialTheNumber = false;
-
       if (this.callStatus === null) {
         await fetch(
           `https://musorok.online:8000/phone_calls/initiate_check_call/`,
@@ -295,6 +301,7 @@ export default {
             console.log("Данные отправлены!", data);
             this.loadPhone = false;
             this.dialTheNumber = true;
+            this.phoneConfirmationBySms();
           })
           .catch((error) => {
             ElMessage.error("Произошла системная ошибка!");
@@ -391,7 +398,6 @@ export default {
           console.log("запрос отправлен!", data);
           this.showCallPhone = false;
           this.showInputSMS = true;
-          this.showTimer = false;
         })
         .catch((error) => {
           ElMessage.error("Ошибка запроса смс!");
@@ -438,9 +444,6 @@ export default {
           ElMessage.error("Ошибка подтверждения номера!");
           console.error("Ошибка подтверждения номера!", err);
         });
-    },
-    callToNumber() {
-      window.location.href = "tel:88005558607";
     },
     confirmTheNumber() {
       console.log(this.userTgName);
@@ -499,6 +502,9 @@ export default {
         }
       }, 3000);
     },
+  },
+  created() {
+    this.getInfoValidateUser();
   },
 };
 </script>
@@ -715,6 +721,15 @@ h4 {
     opacity: 1;
     transform: translateY(0px);
   }
+}
+.not_userValid {
+  text-align: center;
+  display: flex;
+  height: 60vh;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  font-weight: 600;
 }
 </style>
 
