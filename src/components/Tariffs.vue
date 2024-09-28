@@ -1,5 +1,5 @@
 <template>
-  <div class="tariffs">
+  <div class="tariffs" v-if="tariffStatus !== 500">
     <div class="tariffs__text">
       <h4>Выберите тариф</h4>
     </div>
@@ -55,6 +55,9 @@
       >
     </div>
   </div>
+  <div v-if="tariffStatus === 500" class="tariffs__error">
+    <p>{{ errorText }}</p>
+  </div>
 </template>
 <script>
 import { mapGetters } from "vuex";
@@ -74,6 +77,9 @@ export default {
       durationName: null,
       tariffId: null,
       paymentID: null,
+      tariffStatus: null,
+      errorText:
+        "К сожалению, ваш адрес находится вне зоны нашего обслуживания, в связи с чем мы не можем вам предложить выбрать тариф. Если вы уверены, что это ошибка или хотите изменить адрес, вы можете обратиться в чат поддержки",
     };
   },
   computed: {
@@ -102,6 +108,7 @@ export default {
       );
       let data = await response.json();
       this.tariffs = data.tariffs;
+      this.tariffStatus = response.status;
       console.table(this.tariffs);
     },
     showTariffDurationByType(type) {
@@ -289,5 +296,12 @@ html {
 }
 .tariffs__text {
   margin-bottom: 5px;
+}
+.tariffs__error {
+  text-align: center;
+  text-wrap: balance;
+  margin: 0 auto;
+  font-weight: 600;
+  font-size: 17px;
 }
 </style>
